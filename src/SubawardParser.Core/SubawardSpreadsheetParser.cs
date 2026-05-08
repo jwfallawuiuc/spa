@@ -9,13 +9,11 @@ public static class SubawardSpreadsheetParser
     /// <summary>
     /// Parses every visible worksheet in the workbook and returns combined subaward lines.
     /// </summary>
-    /// <param name="includeCostShare">
-    /// When the section header row defines both <c>Sponsor</c> and <c>Cost Share</c> columns,
-    /// adds the cost-share cell to the line amount; otherwise only the <c>Sponsor</c> column is used when present.
+    /// <param name="filePath">The path to the workbook to parse.</param>
+    /// <param name="includeExempt">Whether to include exempt subaward costs.</param>
     /// </param>
     public static SpreadsheetSubawardResult ParseWorkbook(
         string filePath,
-        bool includeCostShare = false,
         bool includeExempt = false)
     {
         var fileName = Path.GetFileName(filePath);
@@ -27,14 +25,13 @@ public static class SubawardSpreadsheetParser
             FileShare.ReadWrite | FileShare.Delete);
         using var workbook = new XLWorkbook(stream, new LoadOptions { RecalculateAllFormulas = true });
         foreach (var worksheet in workbook.Worksheets.Where(w => w.Visibility == XLWorksheetVisibility.Visible))
-            list.AddRange(ParseWorksheet(worksheet, includeCostShare, includeExempt));
+            list.AddRange(ParseWorksheet(worksheet, includeExempt));
 
         return new SpreadsheetSubawardResult(fileName, list);
     }
 
     public static FolderParseResult ParseFolder(
         string folderPath,
-        bool includeCostShare = false,
         bool includeExempt = false)
     {
         if (!Directory.Exists(folderPath))
@@ -50,7 +47,7 @@ public static class SubawardSpreadsheetParser
 
         foreach (var file in files)
         {
-            var result = ParseWorkbook(file, includeCostShare, includeExempt);
+            var result = ParseWorkbook(file, includeExempt);
             perFile.Add(result);
             foreach (var e in result.Entries)
             {
@@ -67,7 +64,6 @@ public static class SubawardSpreadsheetParser
 
     private static IEnumerable<SubawardEntry> ParseWorksheet(
         IXLWorksheet worksheet,
-        bool includeCostShare,
         bool includeExempt)
     {
         var used = worksheet.RangeUsed();
@@ -88,7 +84,7 @@ public static class SubawardSpreadsheetParser
             if (!TryExtractSubawardName(row, lastCol, out var name))
                 continue;
 
-            var amount = GetLineAmount(row, lastCol, sponsorCol, costShareCol, includeCostShare);
+            var amount = GetLineAmount(row, lastCol);
             if (includeExempt && rowNum < endRow)
                 amount += GetExemptAmountFromNextRow(worksheet.Row(rowNum + 1), lastCol);
             yield return new SubawardEntry(name, amount);
@@ -232,21 +228,8 @@ public static class SubawardSpreadsheetParser
     /// amount unless both <c>Sponsor</c> and <c>Cost Share</c> exist and <paramref name="includeCostShare"/> is true,
     /// in which case the two cells are added. Otherwise uses the rightmost plausible dollar cell (legacy layout).
     /// </summary>
-    private static decimal GetLineAmount(
-        IXLRow row,
-        int lastCol,
-        int? sponsorCol,
-        int? costShareCol,
-        bool includeCostShare)
+    private static decimal GetLineAmount(IXLRow row, int lastCol)
     {
-        if (sponsorCol is int sc)
-        {
-            var sponsorAmt = TryGetBudgetDecimal(row.Cell(sc));
-            if (includeCostShare && costShareCol is int csc)
-                return sponsorAmt + TryGetBudgetDecimal(row.Cell(csc));
-            return sponsorAmt;
-        }
-
         decimal? rightmost = null;
         var rightmostCol = 0;
         decimal sum = 0;
@@ -284,6 +267,9 @@ public static class SubawardSpreadsheetParser
 
         return 0m;
     }
+
+
+
 
     private static decimal TryGetBudgetDecimal(IXLCell cell)
     {

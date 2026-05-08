@@ -20,7 +20,7 @@ dotnet run --project src/SubawardParser/SubawardParser.csproj
 The program looks for `.\Spreadsheets` using the current directory first, then walks upward from the application folder. To use another folder:
 
 ```powershell
-dotnet run --project src/SubawardParser/SubawardParser.csproj -- --folder "D:\MyBudgets"
+dotnet run --project src/SubawardParser/SubawardParser.csproj "
 ```
 
 ## How to run tests
@@ -36,14 +36,6 @@ Sample workbooks under `Spreadsheets\` are copied into the test output so tests 
 1. Create a new **public** empty repository on GitHub.
 2. From this folder:
 
-   ```powershell
-   git init
-   git add .
-   git commit -m "Add subaward budget parser and tests"
-   git branch -M main
-   git remote add origin https://github.com/<your-account>/<your-repo>.git
-   git push -u origin main
-   ```
 
 Reviewers clone the repo, install .NET 9 (or newer per above), and run the same `dotnet run` / `dotnet test` commands.
 
@@ -70,7 +62,7 @@ And what should happen if subrecipient name is mising. (Assumption: no normaliza
 
 4. Should Exempt Subaward Costs rows be included?	 (Assumption: add  exempt Subaward Cost amount to sum if the --include-exempt flag is present)	
 5. How should Sponsor/Cost Share columns be treated?
-Assuption: if Sponsor and Cost Share columns are present and --include-cost-share flag is present, add cost Share column amount, otherwise only include Sponsor column.  Because the values in the cost share column are all in the Exempt Subaward Costs rows( at least in the examples given), you should  include the --include-exempt  flag when you use the --include-cost-share flag.
+Assuption: Do not include Cost Share.  If including Cost Share is desired, I would like more than one example file with cost share)
 
 
 To Build:
@@ -80,5 +72,8 @@ dotnet build SubawardParser.sln
 ```
 To run, after a build:
 ```powershell
-src\SubawardParser\bin\Debug\net9.0\SubawardParser.exe -folder, --include-cost-share --include-exempt
+src\SubawardParser\bin\Debug\net9.0\SubawardParser.exe 
+parameters
+--folder {folderpath}
+--include-exempt
 ```

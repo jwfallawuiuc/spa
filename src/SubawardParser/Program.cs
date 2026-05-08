@@ -3,12 +3,10 @@ using SubawardParser.Core;
 
 try
 {
-    var includeCostShare = args.Any(static a =>
-        a.Equals("--include-cost-share", StringComparison.OrdinalIgnoreCase));
     var includeExempt = args.Any(static a =>
         a.Equals("--include-exempt", StringComparison.OrdinalIgnoreCase));
     var folder = SpreadsheetFolderResolver.Resolve(args);
-    var result = SubawardSpreadsheetParser.ParseFolder(folder, includeCostShare, includeExempt);
+    var result = SubawardSpreadsheetParser.ParseFolder(folder, includeExempt);
     ConsoleReport.Write(result, folder);
     return 0;
 }
