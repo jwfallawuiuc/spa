@@ -60,11 +60,25 @@ Reviewers clone the repo, install .NET 9 (or newer per above), and run the same 
 7. **File types:** Only `.xlsx` in the top level of `Spreadsheets` is processed; temporary Excel files like `~$*.xlsx` are ignored.
 8. **Worksheets:** Every **visible** worksheet in each workbook is scanned (not only the first sheet).
 
-## Questions we would have asked on a real project
+## Questions I would have asked on a real project
 
 1. Should **subrecipient names** be normalized to a canonical registry (DUNS, UEI, legal name) when the same organization appears with different spellings?
-2. For multi-year columns, should the “subaward amount” be the **sum of budget periods**, a specific **sponsor year**, or a **total** column only? (The template can make any of these plausible.)
-3. Are subawards ever split across **multiple rows** for one recipient, and should those be merged?
-4. Should **hidden sheets** or **scenario / what-if** versions of the workbook be included or explicitly excluded?
-5. Is **currency and rounding** always USD to two decimals, or should we respect the workbook locale and number formats?
-6. Who owns the **official template version** so we can regression-test layout changes?
+And what should happen if subrecipient name is mising. (Assumption: no normalization, and ignore lines with missing names)
+2. For multi-year columns, should the “subaward amount” be the **sum of budget periods**, a specific **sponsor year**, or a **total** column only? ( Assumption:Total only.)
+
+3. Should **hidden sheets** or **scenario / what-if** versions of the workbook be included or explicitly excluded?(Assumption: include all sheets)
+
+4. Should Exempt Subaward Costs rows be included?	 (Assumption: add  exempt Subaward Cost amount to sum if the --include-exempt flag is present)	
+5. How should Sponsor/Cost Share columns be treated?
+Assuption: if Sponsor and Cost Share columns are present and --include-cost-share flag is present, add cost Share column amount, otherwise only include Sponsor column.  Because the values in the cost share column are all in the Exempt Subaward Costs rows( at least in the examples given), you should  include the --include-exempt  flag when you use the --include-cost-share flag.
+
+
+To Build:
+```powershell
+dotnet restore
+dotnet build SubawardParser.sln
+```
+To run, after a build:
+```powershell
+src\SubawardParser\bin\Debug\net9.0\SubawardParser.exe -folder, --include-cost-share --include-exempt
+```
